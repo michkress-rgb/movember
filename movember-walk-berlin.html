@@ -19,8 +19,78 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .primary-column {
+            min-width: 0;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 20px;
+        }
+
+        .recent-contributors {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .recent-contributors h3 {
+            color: #3b5998;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        .contributor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #3b5998;
+        }
+
+        .contributor-name {
+            font-weight: bold;
+            color: #3b5998;
+            font-size: 0.95em;
+        }
+
+        .contributor-steps {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .contributor-date {
+            color: #999;
+            font-size: 0.8em;
+            margin-top: 3px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
         }
 
         .header {
@@ -428,8 +498,11 @@
             <p style="color: #666; margin-top: 10px;">Teachers & Staff Walking for Movember & Men's Health</p>
         </div>
 
-        <!-- Statistics -->
-        <div class="stats-grid">
+        <!-- Main Content with Sidebar -->
+        <div class="main-content">
+            <div class="primary-column">
+                <!-- Statistics -->
+                <div class="stats-grid">
             <div class="stat-card">
                 <div class="label">Total Steps</div>
                 <div class="value" id="totalSteps">0</div>
@@ -493,6 +566,13 @@
                         <circle cx="220" cy="220" r="4" fill="#95a5a6" stroke="white" stroke-width="1.5"/>
                         <circle cx="250" cy="170" r="4" fill="#95a5a6" stroke="white" stroke-width="1.5"/>
                         <circle cx="270" cy="150" r="8" fill="#27ae60" stroke="white" stroke-width="2"/>
+                    </g>
+                    
+                    <!-- City labels along route -->
+                    <g class="city-labels" style="font-size: 9px; fill: #666;">
+                        <text x="155" y="328" text-anchor="start">Würzburg</text>
+                        <text x="200" y="258" text-anchor="start">Erfurt</text>
+                        <text x="225" y="218" text-anchor="start">Leipzig</text>
                     </g>
                     
                     <g id="walkerIcon" transform="translate(120, 380)">
@@ -623,6 +703,32 @@
             </div>
         </div>
 
+            </div> <!-- End primary-column -->
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Recent Contributors -->
+                <div class="recent-contributors">
+                    <h3>🏆 Recent Steps</h3>
+                    <div id="recentContributors">
+                        <p style="text-align: center; color: #999; padding: 20px 0;">No steps logged yet!</p>
+                    </div>
+                </div>
+
+                <!-- Current City Indicator -->
+                <div class="recent-contributors" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <h3 style="color: white; margin-bottom: 15px;">📍 Current Location</h3>
+                    <div id="currentCityIndicator" style="text-align: center; font-size: 1.1em; font-weight: bold; padding: 10px;">
+                        Starting at Neustadt
+                    </div>
+                    <div id="nextMilestone" style="text-align: center; font-size: 0.9em; margin-top: 10px; opacity: 0.9;">
+                        Next: Würzburg
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End main-content -->
+
         <!-- Movember Resources -->
         <div class="resources-section">
             <h2>💙 Movember & Men's Health Resources</h2>
@@ -698,6 +804,7 @@
         function loadAndDisplay() {
             const entries = getEntries();
             updateDisplay(entries);
+            updateRecentContributors(entries);
         }
 
         function getEntries() {
@@ -820,6 +927,93 @@
             
             document.getElementById('mapLocationText').textContent = locationText;
             document.querySelector('#currentProgressLabel rect').setAttribute('fill', labelColor);
+            
+            // Update city indicator in sidebar
+            updateCityIndicator(distanceKm, tripNumber, isReturning, distanceInCurrentLeg);
+        }
+
+        function updateCityIndicator(distanceKm, tripNumber, isReturning, distanceInCurrentLeg) {
+            const cityIndicator = document.getElementById('currentCityIndicator');
+            const nextMilestone = document.getElementById('nextMilestone');
+            
+            let currentCity = '';
+            let nextCity = '';
+            
+            if (tripNumber === 0) {
+                // First journey to Berlin
+                if (distanceInCurrentLeg < 100) {
+                    currentCity = '🏠 Neustadt an der Weinstraße';
+                    nextCity = 'Next: Würzburg (100 km)';
+                } else if (distanceInCurrentLeg < 200) {
+                    currentCity = '🏰 Würzburg Area';
+                    nextCity = 'Next: Frankfurt region (200 km)';
+                } else if (distanceInCurrentLeg < 300) {
+                    currentCity = '🌳 Hessen/Thüringen';
+                    nextCity = 'Next: Erfurt (300 km)';
+                } else if (distanceInCurrentLeg < 400) {
+                    currentCity = '🏛️ Erfurt Area';
+                    nextCity = 'Next: Leipzig (450 km)';
+                } else if (distanceInCurrentLeg < 500) {
+                    currentCity = '🎵 Leipzig Area';
+                    nextCity = 'Next: Brandenburg (550 km)';
+                } else if (distanceInCurrentLeg < 600) {
+                    currentCity = '🌲 Brandenburg';
+                    nextCity = 'Next: Berlin! (600 km)';
+                } else {
+                    currentCity = '🎉 BERLIN!';
+                    nextCity = 'Goal reached!';
+                }
+            } else if (isReturning) {
+                currentCity = '🔄 Returning to Neustadt';
+                if (distanceInCurrentLeg < 200) {
+                    nextCity = `${600 - distanceInCurrentLeg} km until home`;
+                } else if (distanceInCurrentLeg < 400) {
+                    nextCity = 'Passing through central Germany';
+                } else {
+                    nextCity = 'Almost back to Neustadt!';
+                }
+            } else {
+                currentCity = `🔥 Trip ${Math.floor(tripNumber / 2) + 1} to Berlin`;
+                nextCity = `${GOAL_DISTANCE_KM - distanceInCurrentLeg} km until Berlin`;
+            }
+            
+            cityIndicator.textContent = currentCity;
+            nextMilestone.textContent = nextCity;
+        }
+
+        function updateRecentContributors(entries) {
+            const container = document.getElementById('recentContributors');
+            
+            if (entries.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px 0;">No steps logged yet!</p>';
+                return;
+            }
+
+            // Get last 10 entries
+            const recentEntries = entries.slice(0, 10);
+            
+            let html = '';
+            recentEntries.forEach(entry => {
+                const date = new Date(entry.date);
+                const dateStr = date.toLocaleDateString('en-GB', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                const name = entry.name || 'Unknown';
+                
+                html += `
+                    <div class="contributor-item">
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="contributor-name">${name}</div>
+                            <div class="contributor-date">${dateStr}</div>
+                        </div>
+                        <div class="contributor-steps">${entry.steps.toLocaleString()}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
         function login() {
@@ -897,8 +1091,18 @@
             displayEntries(entries);
             loadAndDisplay();
 
+            // Clear form
             document.getElementById('userName').value = '';
             document.getElementById('stepCount').value = '';
+            
+            // Show success message
+            alert(`✅ Success! ${steps.toLocaleString()} steps added for ${name}!`);
+            
+            // Automatically log out (unless admin)
+            if (!isAdmin) {
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('stepLoggingSection').style.display = 'none';
+            }
         }
 
         function deleteEntry(index) {
