@@ -1243,6 +1243,18 @@
             alert('✅ All data has been reset');
         }
 
+        // Make functions globally accessible for onclick handlers
+        window.login = login;
+        window.logout = logout;
+        window.showAdminLogin = showAdminLogin;
+        window.backToMainView = backToMainView;
+        window.adminLogin = adminLogin;
+        window.addSteps = addSteps;
+        window.deleteEntry = deleteEntry;
+        window.setManualSteps = setManualSteps;
+        window.quickAddSteps = quickAddSteps;
+        window.resetAllData = resetAllData;
+
         } // End of startApp function
     </script>
 </body>
