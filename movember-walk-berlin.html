@@ -452,25 +452,6 @@
             padding: 20px;
         }
 
-        .firebase-notice {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .firebase-notice h3 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        .firebase-notice p {
-            color: #856404;
-            line-height: 1.6;
-        }
-
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -516,12 +497,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Firebase Configuration Notice -->
-        <div class="firebase-notice" id="firebaseNotice">
-            <h3>⚙️ Firebase Setup Required</h3>
-            <p><strong>Admin:</strong> Please add your Firebase configuration in the code. See instructions in the HTML file comments.</p>
-        </div>
-
         <!-- Public Header -->
         <div class="header">
             <h1>🚶‍♂️ Walk to Berlin 2025 🚶‍♀️</h1>
@@ -845,14 +820,10 @@
             firebase.initializeApp(firebaseConfig);
             const database = firebase.database();
             
-            // Hide the configuration notice
-            document.getElementById('firebaseNotice').style.display = 'none';
-            
             // Start the app
             startApp(database);
         }
 
-        function startApp(database) {
         function startApp(database) {
         // Constants
         const PASSWORD = '554433';
@@ -1273,6 +1244,7 @@
         }
 
         } // End of startApp function
+        } // End of initializeApp function
     </script>
 </body>
 </html>
