@@ -812,49 +812,48 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
-        /*
-        ============================================
-        FIREBASE CONFIGURATION - SETUP REQUIRED
-        ============================================
-        
-        Follow these steps to set up Firebase:
-        
-        1. Go to https://console.firebase.google.com/
-        2. Click "Add project" and create a new project (name it "ISN-Movember" or similar)
-        3. Once created, click the Web icon (</>) to add a web app
-        4. Register the app (name it "Walk to Berlin")
-        5. Copy the firebaseConfig object
-        6. Paste it below, replacing the placeholder config
-        7. Go to "Realtime Database" in Firebase Console
-        8. Click "Create Database"
-        9. Choose "Start in test mode" for now (we'll secure it later)
-        10. Click "Enable"
-        
-        Your config will look like this:
-        */
-        
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY_HERE",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+        // Wait for Firebase to load
+        window.addEventListener('load', function() {
+            initializeApp();
+        });
 
-        // Check if Firebase is configured
-        const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY_HERE";
-        
-        if (!isFirebaseConfigured) {
-            console.warn("Firebase not configured yet. See instructions in the code.");
-        } else {
+        function initializeApp() {
+            /*
+            ============================================
+            FIREBASE CONFIGURATION - SETUP REQUIRED
+            ============================================
+            */
+            
+            const firebaseConfig = {
+                apiKey: "AIzaSyDXEMGKw3g24o0a-fkrD7ywk_MOuTtZJeY",
+                authDomain: "isn-movember.firebaseapp.com",
+                databaseURL: "https://isn-movember-default-rtdb.firebaseio.com",
+                projectId: "isn-movember",
+                storageBucket: "isn-movember.firebasestorage.app",
+                messagingSenderId: "397597913187",
+                appId: "1:397597913187:web:333e00f47ee6414f348856"
+            };
+
+            // Check if Firebase is loaded
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded');
+                alert('Error: Firebase SDK failed to load. Please check your internet connection.');
+                return;
+            }
+
             // Initialize Firebase
             firebase.initializeApp(firebaseConfig);
             const database = firebase.database();
+            
+            // Hide the configuration notice
             document.getElementById('firebaseNotice').style.display = 'none';
+            
+            // Start the app
+            startApp(database);
         }
 
+        function startApp(database) {
+        function startApp(database) {
         // Constants
         const PASSWORD = '554433';
         const ADMIN_PASSWORD = '9818415';
@@ -865,67 +864,40 @@
         let entriesCache = [];
 
         // Load and display data on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAndDisplay();
-            document.getElementById('stepDate').valueAsDate = new Date();
-            
-            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') login();
-            });
-            
-            document.getElementById('adminPasswordInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') adminLogin();
-            });
-            
-            // Listen for real-time updates from Firebase
-            if (isFirebaseConfigured) {
-                database.ref('steps').on('value', (snapshot) => {
-                    const data = snapshot.val();
-                    entriesCache = data ? Object.values(data) : [];
-                    entriesCache.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    updateDisplay(entriesCache);
-                    updateRecentContributors(entriesCache);
-                    if (document.getElementById('stepLoggingSection').style.display !== 'none') {
-                        displayEntries(entriesCache);
-                    }
-                });
-            } else {
-                // Fallback to localStorage for testing
-                loadAndDisplay();
-                setInterval(loadAndDisplay, 5000);
-            }
+        document.getElementById('stepDate').valueAsDate = new Date();
+        
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
         });
-
-        function loadAndDisplay() {
-            if (!isFirebaseConfigured) {
-                // Fallback to localStorage
-                const data = localStorage.getItem('stepEntries');
-                entriesCache = data ? JSON.parse(data) : [];
-            }
+        
+        document.getElementById('adminPasswordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') adminLogin();
+        });
+        
+        // Listen for real-time updates from Firebase
+        database.ref('steps').on('value', (snapshot) => {
+            const data = snapshot.val();
+            entriesCache = data ? Object.values(data) : [];
+            entriesCache.sort((a, b) => new Date(b.date) - new Date(a.date));
             updateDisplay(entriesCache);
             updateRecentContributors(entriesCache);
-        }
+            if (document.getElementById('stepLoggingSection').style.display !== 'none') {
+                displayEntries(entriesCache);
+            }
+        });
 
         function getEntries() {
             return entriesCache;
         }
 
         function saveEntries(entries) {
-            if (isFirebaseConfigured) {
-                // Save to Firebase
-                const updates = {};
-                entries.forEach((entry, index) => {
-                    const key = entry.id || database.ref('steps').push().key;
-                    entry.id = key;
-                    updates[`steps/${key}`] = entry;
-                });
-                database.ref().update(updates);
-            } else {
-                // Fallback to localStorage
-                localStorage.setItem('stepEntries', JSON.stringify(entries));
-                entriesCache = entries;
-                loadAndDisplay();
-            }
+            const updates = {};
+            entries.forEach((entry, index) => {
+                const key = entry.id || database.ref('steps').push().key;
+                entry.id = key;
+                updates[`steps/${key}`] = entry;
+            });
+            database.ref().update(updates);
         }
 
         function calculateTotalSteps(entries) {
@@ -1177,7 +1149,6 @@
                 return;
             }
 
-            const entries = getEntries();
             const newEntry = {
                 name: name,
                 date: date,
@@ -1185,14 +1156,9 @@
                 timestamp: new Date().toISOString()
             };
 
-            if (isFirebaseConfigured) {
-                const newKey = database.ref('steps').push().key;
-                newEntry.id = newKey;
-                database.ref(`steps/${newKey}`).set(newEntry);
-            } else {
-                entries.push(newEntry);
-                saveEntries(entries);
-            }
+            const newKey = database.ref('steps').push().key;
+            newEntry.id = newKey;
+            database.ref(`steps/${newKey}`).set(newEntry);
 
             document.getElementById('userName').value = '';
             document.getElementById('stepCount').value = '';
@@ -1207,16 +1173,7 @@
 
         function deleteEntry(id) {
             if (confirm('Delete this entry?')) {
-                if (isFirebaseConfigured) {
-                    database.ref(`steps/${id}`).remove();
-                } else {
-                    const entries = getEntries();
-                    const index = entries.findIndex(e => e.timestamp === id);
-                    if (index > -1) {
-                        entries.splice(index, 1);
-                        saveEntries(entries);
-                    }
-                }
+                database.ref(`steps/${id}`).remove();
             }
         }
 
@@ -1264,29 +1221,18 @@
 
             if (!confirm(`Set total steps to ${steps.toLocaleString()}? This will clear all entries.`)) return;
 
-            if (isFirebaseConfigured) {
-                database.ref('steps').remove().then(() => {
-                    const newEntry = {
-                        name: 'Admin',
-                        date: new Date().toISOString().split('T')[0],
-                        steps: steps,
-                        timestamp: new Date().toISOString(),
-                        manual: true
-                    };
-                    const newKey = database.ref('steps').push().key;
-                    newEntry.id = newKey;
-                    database.ref(`steps/${newKey}`).set(newEntry);
-                });
-            } else {
-                const entries = [{
+            database.ref('steps').remove().then(() => {
+                const newEntry = {
                     name: 'Admin',
                     date: new Date().toISOString().split('T')[0],
                     steps: steps,
                     timestamp: new Date().toISOString(),
                     manual: true
-                }];
-                saveEntries(entries);
-            }
+                };
+                const newKey = database.ref('steps').push().key;
+                newEntry.id = newKey;
+                database.ref(`steps/${newKey}`).set(newEntry);
+            });
 
             document.getElementById('manualSteps').value = '';
             alert(`Total steps set to ${steps.toLocaleString()}`);
@@ -1309,15 +1255,9 @@
                 manual: true
             };
 
-            if (isFirebaseConfigured) {
-                const newKey = database.ref('steps').push().key;
-                newEntry.id = newKey;
-                database.ref(`steps/${newKey}`).set(newEntry);
-            } else {
-                const entries = getEntries();
-                entries.push(newEntry);
-                saveEntries(entries);
-            }
+            const newKey = database.ref('steps').push().key;
+            newEntry.id = newKey;
+            database.ref(`steps/${newKey}`).set(newEntry);
 
             document.getElementById('quickAddSteps').value = '';
             alert(`Added ${steps.toLocaleString()} steps`);
@@ -1327,16 +1267,12 @@
             if (!confirm('⚠️ WARNING: Delete ALL data?')) return;
             if (!confirm('Final confirmation: Delete everything?')) return;
 
-            if (isFirebaseConfigured) {
-                database.ref('steps').remove();
-            } else {
-                localStorage.removeItem('stepEntries');
-                entriesCache = [];
-                loadAndDisplay();
-            }
+            database.ref('steps').remove();
             
             alert('✅ All data has been reset');
         }
+
+        } // End of startApp function
     </script>
 </body>
 </html>
