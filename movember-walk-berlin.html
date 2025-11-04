@@ -782,23 +782,34 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <!-- Firebase SDK - Latest Version -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 
     <script>
-        // Wait for Firebase to load
+        // Wait for Firebase to load with retry
+        let retryCount = 0;
+        const maxRetries = 10;
+        
+        function checkFirebaseLoaded() {
+            if (typeof firebase !== 'undefined') {
+                console.log('Firebase loaded successfully!');
+                initializeApp();
+            } else if (retryCount < maxRetries) {
+                retryCount++;
+                console.log('Waiting for Firebase... attempt', retryCount);
+                setTimeout(checkFirebaseLoaded, 500);
+            } else {
+                console.error('Firebase failed to load after', maxRetries, 'attempts');
+                alert('⚠️ Error: Firebase is not loading. Please:\n1. Check your internet connection\n2. Disable any ad blockers\n3. Try refreshing the page\n4. Make sure firebaseio.com is not blocked');
+            }
+        }
+
         window.addEventListener('load', function() {
-            initializeApp();
+            checkFirebaseLoaded();
         });
 
         function initializeApp() {
-            /*
-            ============================================
-            FIREBASE CONFIGURATION - SETUP REQUIRED
-            ============================================
-            */
-            
             const firebaseConfig = {
                 apiKey: "AIzaSyDXEMGKw3g24o0a-fkrD7ywk_MOuTtZJeY",
                 authDomain: "isn-movember.firebaseapp.com",
@@ -809,16 +820,11 @@
                 appId: "1:397597913187:web:333e00f47ee6414f348856"
             };
 
-            // Check if Firebase is loaded
-            if (typeof firebase === 'undefined') {
-                console.error('Firebase SDK not loaded');
-                alert('Error: Firebase SDK failed to load. Please check your internet connection.');
-                return;
-            }
-
             // Initialize Firebase
+            console.log('Initializing Firebase...');
             firebase.initializeApp(firebaseConfig);
             const database = firebase.database();
+            console.log('Firebase initialized successfully!');
             
             // Start the app
             startApp(database);
@@ -1110,6 +1116,8 @@
             const date = document.getElementById('stepDate').value;
             const steps = parseInt(document.getElementById('stepCount').value);
 
+            console.log('Adding steps:', { name, date, steps });
+
             if (!name) {
                 alert('Please enter your name');
                 return;
@@ -1127,19 +1135,30 @@
                 timestamp: new Date().toISOString()
             };
 
+            console.log('Creating entry:', newEntry);
+
             const newKey = database.ref('steps').push().key;
             newEntry.id = newKey;
-            database.ref(`steps/${newKey}`).set(newEntry);
-
-            document.getElementById('userName').value = '';
-            document.getElementById('stepCount').value = '';
             
-            alert(`✅ Success! ${steps.toLocaleString()} steps added for ${name}!`);
+            console.log('Saving to Firebase with key:', newKey);
             
-            if (!isAdmin) {
-                document.getElementById('loginSection').style.display = 'block';
-                document.getElementById('stepLoggingSection').style.display = 'none';
-            }
+            database.ref(`steps/${newKey}`).set(newEntry)
+                .then(() => {
+                    console.log('Successfully saved to Firebase!');
+                    document.getElementById('userName').value = '';
+                    document.getElementById('stepCount').value = '';
+                    
+                    alert(`✅ Success! ${steps.toLocaleString()} steps added for ${name}!`);
+                    
+                    if (!isAdmin) {
+                        document.getElementById('loginSection').style.display = 'block';
+                        document.getElementById('stepLoggingSection').style.display = 'none';
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error saving to Firebase:', error);
+                    alert('❌ Error saving steps: ' + error.message + '\n\nPlease make sure your Realtime Database is created in Firebase Console.');
+                });
         }
 
         function deleteEntry(id) {
